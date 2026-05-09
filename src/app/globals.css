@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+/* ── Autosa background images (same as autosa.net) ── */
+/* Hero sections – purple abstract, overlay blend */
+.bg-hero-image {
+  background-image: url('https://cdn.dorik.com/6231c5ff317f6e0012e1bed0/64456811304170004cf83658/images/milad-fakurian-oaUyvNPU5lc-unsplash_1hcmp7yh.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: rgba(0, 0, 0, 0.82);
+  background-blend-mode: overlay;
+  background-attachment: fixed;
+}
+/* Service page heroes – same image, scroll attachment so it's never clipped */
+.bg-service-hero {
+  background-image: url('https://cdn.dorik.com/6231c5ff317f6e0012e1bed0/64456811304170004cf83658/images/milad-fakurian-oaUyvNPU5lc-unsplash_1hcmp7yh.jpg');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-color: rgba(0, 0, 0, 0.78);
+  background-blend-mode: overlay;
+  background-attachment: scroll;
+}
+/* Content sections – dark textured, multiply blend */
+.bg-section-image {
+  background-image: url('https://cdn.dorik.com/6231c5ff317f6e0012e1bed0/64456811304170004cf83658/images/milad-fakurian-MBgK-AHSrVs-unsplash_fhpl38k8.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #000000;
+  background-blend-mode: multiply;
+  background-attachment: fixed;
+}
+/* Alternate sections – third Milad Fakurian image */
+.bg-alt-image {
+  background-image: url('https://cdn.dorik.com/6231c5ff317f6e0012e1bed0/64456811304170004cf83658/images/milad-fakurian-lxwahh7j5Qw-unsplash_sih4sm47.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: rgba(0, 0, 0, 0.75);
+  background-blend-mode: multiply;
+  background-attachment: fixed;
+}
+
+/* Typography – serif headings like autosa.net */
+h1, h2, h3, h4, h5 {
+  font-family: 'Merriweather', Georgia, serif;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes float-up {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+@keyframes btn-glow-pulse {
+  0%, 100% { box-shadow: 0 6px 24px rgba(200, 149, 90, 0.2); }
+  50% { box-shadow: 0 10px 36px rgba(200, 149, 90, 0.38); }
+}
+
+.animate-spin-slow { animation: spin-slow 60s linear infinite; }
+.animate-float-up { animation: float-up 6s ease-in-out infinite; }
+.animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
+.animate-shimmer { animation: shimmer 3s linear infinite; background-size: 200% auto; }
+.animate-pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+/* Amber gradient text */
+.text-gradient {
+  background: linear-gradient(45deg, #c8955a, #b85040 78%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* White shimmer text */
+.text-shimmer {
+  background: linear-gradient(90deg, #ffffff 0%, #ffffff80 40%, #ffffff 60%, #ffffff80 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Autosa wordmark – Blanka display font, for brand names ONLY */
+.autosa-wordmark {
+  font-family: 'Blanka', 'Open Sans', system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.card-hover {
+  transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* Dot grid background */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Autosa amber – muted warm amber brand color */
+.text-amber { color: #c8955a; }
+.bg-amber { background-color: #c8955a; }
+.border-amber { border-color: #c8955a; }
+
+/* ── Primary button — gradient pill, autosa.net style ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(45deg, #c8955a, #b85040 78%);
+  border-radius: 40px;
+  font-family: 'Open Sans', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #fff;
+  padding: 16px 36px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.35s ease;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, #b85040, #c8955a 78%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  border-radius: 40px;
+}
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 36px rgba(200, 149, 90, 0.35);
+}
+.btn-primary:hover::before {
+  opacity: 1;
+}
+.btn-primary > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Outline button — bordered pill ── */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border-radius: 40px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  font-family: 'Open Sans', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 15px 36px;
+  cursor: pointer;
+  transition: all 0.35s ease;
+}
+.btn-outline:hover {
+  border-color: #c8955a;
+  color: #c8955a;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(200, 149, 90, 0.12);
+}
+
+/* Scan line effect */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+}
+
+/* Section label pill */
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Open Sans', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: #c8955a;
+}
+.section-label::before,
+.section-label::after {
+  content: '';
+  display: block;
+  height: 1px;
+  width: 28px;
+  background: #c8955a;
+}

@@ -1,0 +1,574 @@
+"use client";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useAdmin } from "@/components/admin/AdminContext";
+import { useToast } from "@/components/admin/Toast";
+import ConfirmModal from "@/components/admin/ConfirmModal";
+import FormField from "@/components/admin/FormField";
+import { useSearchParams, useRouter } from "next/navigation";
+import {
+  Plus, Trash2, Edit2, ChevronDown, ChevronRight,
+  GitBranch, Globe, User, FolderGit2, Zap, Layers,
+} from "lucide-react";
+
+type ServiceSlug = "nova" | "solvo" | "yard";
+
+interface AdminOption {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+interface SubProject {
+  _id: string;
+  service: ServiceSlug;
+  name: string;
+  description: string;
+  responsibleAdminId?: string;
+  responsibleAdminName?: string;
+  githubUrl?: string;
+  demoUrl?: string;
+  createdAt: string;
+}
+
+interface Project {
+  _id: string;
+  subProjectId: string;
+  service: ServiceSlug;
+  name: string;
+  description: string;
+  responsibleAdminId?: string;
+  responsibleAdminName?: string;
+  githubUrl?: string;
+  demoUrl?: string;
+  createdAt: string;
+}
+
+const SERVICE_META: Record<ServiceSlug, { label: string; desc: string; color: string; accent: string; glow: string }> = {
+  nova: {
+    label: "Nova",
+    desc: "Next-generation AI-powered solutions",
+    color: "bg-orange-500/15 text-orange-300 border-orange-500/25",
+    accent: "text-orange-400",
+    glow: "shadow-orange-500/10",
+  },
+  solvo: {
+    label: "Solvo",
+    desc: "Intelligent problem-solving platform",
+    color: "bg-orange-500/10 text-orange-200 border-orange-500/20",
+    accent: "text-orange-300",
+    glow: "shadow-orange-500/5",
+  },
+  yard: {
+    label: "Yard",
+    desc: "Developer workspace & tooling",
+    color: "bg-white/[0.07] text-white/70 border-white/10",
+    accent: "text-white/50",
+    glow: "shadow-white/5",
+  },
+};
+
+const EMPTY_FORM = { name: "", description: "", responsibleAdminId: "", githubUrl: "", demoUrl: "" };
+
+function ServicesContent() {
+  const { fetchWithAuth, admin } = useAdmin();
+  const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const initialService = (searchParams.get("service") as ServiceSlug) || "nova";
+  const [activeService, setActiveService] = useState<ServiceSlug>(initialService);
+  const [subProjects, setSubProjects] = useState<SubProject[]>([]);
+  const [projects, setProjects] = useState<Record<string, Project[]>>({});
+  const [expandedSubs, setExpandedSubs] = useState<Set<string>>(new Set());
+  const [adminOptions, setAdminOptions] = useState<AdminOption[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Sub-project form
+  const [showSubForm, setShowSubForm] = useState(false);
+  const [editSub, setEditSub] = useState<SubProject | null>(null);
+  const [subForm, setSubForm] = useState(EMPTY_FORM);
+  const [subErrors, setSubErrors] = useState<Partial<typeof EMPTY_FORM>>({});
+  const [savingSub, setSavingSub] = useState(false);
+  const [confirmDeleteSub, setConfirmDeleteSub] = useState<SubProject | null>(null);
+
+  // Project form
+  const [showProjForm, setShowProjForm] = useState<string | null>(null); // subProjectId
+  const [editProj, setEditProj] = useState<Project | null>(null);
+  const [projForm, setProjForm] = useState(EMPTY_FORM);
+  const [projErrors, setProjErrors] = useState<Partial<typeof EMPTY_FORM>>({});
+  const [savingProj, setSavingProj] = useState(false);
+  const [confirmDeleteProj, setConfirmDeleteProj] = useState<Project | null>(null);
+
+  const fetchSubProjects = useCallback(async (service: ServiceSlug) => {
+    setLoading(true);
+    try {
+      const res = await fetchWithAuth(`/api/sub-projects?service=${service}`);
+      const data = await res.json();
+      setSubProjects(data.data ?? []);
+      setProjects({});
+      setExpandedSubs(new Set());
+    } catch {
+      toast("Failed to load sub-projects", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchWithAuth, toast]);
+
+  const fetchProjects = useCallback(async (subProjectId: string) => {
+    try {
+      const res = await fetchWithAuth(`/api/projects?subProjectId=${subProjectId}`);
+      const data = await res.json();
+      setProjects((prev) => ({ ...prev, [subProjectId]: data.data ?? [] }));
+    } catch {
+      toast("Failed to load projects", "error");
+    }
+  }, [fetchWithAuth, toast]);
+
+  const fetchAdmins = useCallback(async () => {
+    if (admin?.role !== "owner") return;
+    try {
+      const res = await fetchWithAuth("/api/admins");
+      const data = await res.json();
+      setAdminOptions(data.data ?? []);
+    } catch { /* non-critical */ }
+  }, [fetchWithAuth, admin?.role]);
+
+  useEffect(() => {
+    fetchSubProjects(activeService);
+    fetchAdmins();
+  }, [activeService, fetchSubProjects, fetchAdmins]);
+
+  function switchService(svc: ServiceSlug) {
+    setActiveService(svc);
+    router.replace(`/admin/services?service=${svc}`, { scroll: false });
+  }
+
+  function toggleExpand(id: string) {
+    setExpandedSubs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+        if (!projects[id]) fetchProjects(id);
+      }
+      return next;
+    });
+  }
+
+  // ── Sub-project CRUD ────────────────────────────────────────────────────
+  function validateSubForm() {
+    const e: Partial<typeof EMPTY_FORM> = {};
+    if (!subForm.name.trim()) e.name = "Required";
+    if (!subForm.description.trim()) e.description = "Required";
+    setSubErrors(e);
+    return !Object.keys(e).length;
+  }
+
+  async function handleSaveSub() {
+    if (!validateSubForm()) return;
+    setSavingSub(true);
+    try {
+      const body = { service: activeService, ...subForm };
+      let res: Response;
+      if (editSub) {
+        res = await fetchWithAuth(`/api/sub-projects/${editSub._id}`, { method: "PATCH", body: JSON.stringify(body) });
+      } else {
+        res = await fetchWithAuth("/api/sub-projects", { method: "POST", body: JSON.stringify(body) });
+      }
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      toast(editSub ? "Sub-project updated" : "Sub-project created", "success");
+      setShowSubForm(false);
+      setEditSub(null);
+      setSubForm(EMPTY_FORM);
+      fetchSubProjects(activeService);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to save", "error");
+    } finally {
+      setSavingSub(false);
+    }
+  }
+
+  async function handleDeleteSub(sub: SubProject) {
+    try {
+      const res = await fetchWithAuth(`/api/sub-projects/${sub._id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      toast("Sub-project deleted", "success");
+      fetchSubProjects(activeService);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to delete", "error");
+    } finally {
+      setConfirmDeleteSub(null);
+    }
+  }
+
+  // ── Project CRUD ─────────────────────────────────────────────────────────
+  function validateProjForm() {
+    const e: Partial<typeof EMPTY_FORM> = {};
+    if (!projForm.name.trim()) e.name = "Required";
+    if (!projForm.description.trim()) e.description = "Required";
+    setProjErrors(e);
+    return !Object.keys(e).length;
+  }
+
+  async function handleSaveProj(subProjectId: string) {
+    if (!validateProjForm()) return;
+    setSavingProj(true);
+    try {
+      const body = { subProjectId, ...projForm };
+      let res: Response;
+      if (editProj) {
+        res = await fetchWithAuth(`/api/projects/${editProj._id}`, { method: "PATCH", body: JSON.stringify(body) });
+      } else {
+        res = await fetchWithAuth("/api/projects", { method: "POST", body: JSON.stringify(body) });
+      }
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      toast(editProj ? "Project updated" : "Project created", "success");
+      setShowProjForm(null);
+      setEditProj(null);
+      setProjForm(EMPTY_FORM);
+      fetchProjects(subProjectId);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to save", "error");
+    } finally {
+      setSavingProj(false);
+    }
+  }
+
+  async function handleDeleteProj(proj: Project) {
+    try {
+      const res = await fetchWithAuth(`/api/projects/${proj._id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      toast("Project deleted", "success");
+      fetchProjects(proj.subProjectId);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to delete", "error");
+    } finally {
+      setConfirmDeleteProj(null);
+    }
+  }
+
+  const meta = SERVICE_META[activeService];
+
+  return (
+    <div className="px-4 py-6 sm:p-8 max-w-5xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-white text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Layers size={22} className="text-orange-400" /> Services
+          </h1>
+          <p className="text-white/40 text-sm mt-1">Manage sub-projects and nested projects</p>
+        </div>
+      </div>
+
+      {/* Service Tabs */}
+      <div className="flex gap-2 mb-6 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06] w-fit">
+        {(["nova", "solvo", "yard"] as ServiceSlug[]).map((svc) => (
+          <button
+            key={svc}
+            onClick={() => switchService(svc)}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 capitalize ${
+              activeService === svc
+                ? `border ${SERVICE_META[svc].color}`
+                : "text-white/40 hover:text-white"
+            }`}
+          >
+            {svc}
+          </button>
+        ))}
+      </div>
+
+      {/* Service description + Add button */}
+      <div className="flex items-center justify-between mb-5">
+        <p className={`text-sm ${meta.accent}`}>{meta.desc}</p>
+        <button
+          onClick={() => { setSubForm(EMPTY_FORM); setSubErrors({}); setEditSub(null); setShowSubForm(true); }}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 text-white text-sm font-semibold hover:bg-orange-500 transition-colors"
+        >
+          <Plus size={15} /> Add Sub-Project
+        </button>
+      </div>
+
+      {/* Sub-projects list */}
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2].map((i) => <div key={i} className="h-20 rounded-2xl bg-white/[0.03] border border-white/[0.06] animate-pulse" />)}
+        </div>
+      ) : subProjects.length === 0 ? (
+        <div className="text-center py-16 rounded-2xl border border-dashed border-white/[0.08]">
+          <FolderGit2 size={40} className="text-white/10 mx-auto mb-3" />
+          <p className="text-white/30 text-sm">No sub-projects yet for {activeService}.</p>
+          <button
+            onClick={() => { setSubForm(EMPTY_FORM); setSubErrors({}); setEditSub(null); setShowSubForm(true); }}
+            className="mt-4 text-orange-400 text-sm hover:text-orange-300 transition-colors"
+          >
+            + Create one
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {subProjects.map((sub) => {
+            const isExpanded = expandedSubs.has(sub._id);
+            const subProjects_ = projects[sub._id];
+
+            return (
+              <div key={sub._id} className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
+                {/* Sub-project header */}
+                <div className="flex items-center gap-3 px-5 py-4">
+                  <button
+                    onClick={() => toggleExpand(sub._id)}
+                    className="text-white/30 hover:text-white/60 transition-colors flex-shrink-0"
+                  >
+                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-white font-semibold text-sm">{sub.name}</p>
+                      {sub.responsibleAdminName && (
+                        <span className="flex items-center gap-1 text-white/30 text-xs">
+                          <User size={10} /> {sub.responsibleAdminName}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-white/40 text-xs mt-0.5 truncate">{sub.description}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {sub.githubUrl && (
+                      <a href={sub.githubUrl} target="_blank" rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/5 transition-all" title="GitHub">
+                        <GitBranch size={14} />
+                      </a>
+                    )}
+                    {sub.demoUrl && (
+                      <a href={sub.demoUrl} target="_blank" rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/5 transition-all" title="Demo">
+                        <Globe size={14} />
+                      </a>
+                    )}
+                    <button onClick={() => { setEditSub(sub); setSubForm({ name: sub.name, description: sub.description, responsibleAdminId: sub.responsibleAdminId ?? "", githubUrl: sub.githubUrl ?? "", demoUrl: sub.demoUrl ?? "" }); setSubErrors({}); setShowSubForm(true); }}
+                      className="p-1.5 rounded-lg text-white/25 hover:text-white hover:bg-white/5 transition-all">
+                      <Edit2 size={14} />
+                    </button>
+                    <button onClick={() => setConfirmDeleteSub(sub)}
+                      className="p-1.5 rounded-lg text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Nested projects */}
+                {isExpanded && (
+                  <div className="border-t border-white/[0.04] bg-[#050505]">
+                    <div className="px-5 py-3 flex items-center justify-between">
+                      <p className="text-white/30 text-xs font-medium uppercase tracking-wider">Projects</p>
+                      <button
+                        onClick={() => { setProjForm(EMPTY_FORM); setProjErrors({}); setEditProj(null); setShowProjForm(sub._id); }}
+                        className="flex items-center gap-1.5 text-xs text-orange-400 hover:text-orange-300 transition-colors"
+                      >
+                        <Plus size={12} /> Add Project
+                      </button>
+                    </div>
+
+                    {!subProjects_ ? (
+                      <div className="px-5 pb-4">
+                        <div className="h-8 rounded-lg bg-white/[0.03] animate-pulse" />
+                      </div>
+                    ) : subProjects_.length === 0 ? (
+                      <div className="px-5 pb-4 text-center">
+                        <p className="text-white/20 text-xs">No projects yet.</p>
+                      </div>
+                    ) : (
+                      <div className="px-5 pb-4 space-y-2">
+                        {subProjects_.map((proj) => (
+                          <div key={proj._id} className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3.5">
+                            <div className="flex items-start gap-3">
+                              <Zap size={13} className={`mt-0.5 flex-shrink-0 ${meta.accent}`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="text-white/90 text-sm font-medium">{proj.name}</p>
+                                  {proj.responsibleAdminName && (
+                                    <span className="flex items-center gap-1 text-white/25 text-xs">
+                                      <User size={9} /> {proj.responsibleAdminName}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-white/35 text-xs mt-0.5 leading-relaxed">{proj.description}</p>
+                                <div className="flex items-center gap-3 mt-2">
+                                  {proj.githubUrl && (
+                                    <a href={proj.githubUrl} target="_blank" rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-white/30 hover:text-white/60 text-xs transition-colors">
+                                      <GitBranch size={11} /> GitHub
+                                    </a>
+                                  )}
+                                  {proj.demoUrl && (
+                                    <a href={proj.demoUrl} target="_blank" rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-white/30 hover:text-white/60 text-xs transition-colors">
+                                      <Globe size={11} /> Demo
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <button onClick={() => { setEditProj(proj); setProjForm({ name: proj.name, description: proj.description, responsibleAdminId: proj.responsibleAdminId ?? "", githubUrl: proj.githubUrl ?? "", demoUrl: proj.demoUrl ?? "" }); setProjErrors({}); setShowProjForm(sub._id); }}
+                                  className="p-1 rounded-lg text-white/20 hover:text-white hover:bg-white/5 transition-all">
+                                  <Edit2 size={12} />
+                                </button>
+                                <button onClick={() => setConfirmDeleteProj(proj)}
+                                  className="p-1 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Sub-project Modal ─────────────────────────────────────────────────── */}
+      {showSubForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => { setShowSubForm(false); setEditSub(null); }} />
+          <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-[#111111] p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-white font-bold text-lg mb-5">
+              {editSub ? "Edit Sub-Project" : `New Sub-Project · ${activeService}`}
+            </h2>
+            <div className="space-y-4">
+              <FormField label="Name" required value={subForm.name}
+                onChange={(e) => setSubForm((f) => ({ ...f, name: (e.target as HTMLInputElement).value }))}
+                placeholder="My Sub-Project" error={subErrors.name} />
+              <FormField label="Description" required textarea rows={3} value={subForm.description}
+                onChange={(e) => setSubForm((f) => ({ ...f, description: (e.target as HTMLTextAreaElement).value }))}
+                placeholder="What does this sub-project do?" error={subErrors.description} />
+              {admin?.role === "owner" && adminOptions.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-white/60 text-xs font-medium">Responsible Admin</label>
+                  <select
+                    value={subForm.responsibleAdminId}
+                    onChange={(e) => setSubForm((f) => ({ ...f, responsibleAdminId: e.target.value }))}
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-orange-500/60 transition-colors"
+                  >
+                    <option value="">— None —</option>
+                    {adminOptions.map((a) => (
+                      <option key={a._id} value={a._id}>{a.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <FormField label="GitHub URL" value={subForm.githubUrl}
+                onChange={(e) => setSubForm((f) => ({ ...f, githubUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://github.com/org/repo" />
+              <FormField label="Demo URL" value={subForm.demoUrl}
+                onChange={(e) => setSubForm((f) => ({ ...f, demoUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://demo.autosa.net" />
+            </div>
+            <div className="flex gap-3 justify-end mt-6">
+              <button onClick={() => { setShowSubForm(false); setEditSub(null); }}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white/60 bg-white/5 hover:bg-white/10 transition-colors">
+                Cancel
+              </button>
+              <button onClick={handleSaveSub} disabled={savingSub}
+                className="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white hover:bg-orange-500 disabled:opacity-50 transition-colors">
+                {savingSub ? "Saving…" : editSub ? "Save Changes" : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Project Modal ──────────────────────────────────────────────────────── */}
+      {showProjForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => { setShowProjForm(null); setEditProj(null); }} />
+          <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-[#111111] p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-white font-bold text-lg mb-5">
+              {editProj ? "Edit Project" : "New Project"}
+            </h2>
+            <div className="space-y-4">
+              <FormField label="Project Name" required value={projForm.name}
+                onChange={(e) => setProjForm((f) => ({ ...f, name: (e.target as HTMLInputElement).value }))}
+                placeholder="Project Name" error={projErrors.name} />
+              <FormField label="Description" required textarea rows={3} value={projForm.description}
+                onChange={(e) => setProjForm((f) => ({ ...f, description: (e.target as HTMLTextAreaElement).value }))}
+                placeholder="Describe the project" error={projErrors.description} />
+              {admin?.role === "owner" && adminOptions.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-white/60 text-xs font-medium">Admin Responsible</label>
+                  <select
+                    value={projForm.responsibleAdminId}
+                    onChange={(e) => setProjForm((f) => ({ ...f, responsibleAdminId: e.target.value }))}
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-orange-500/60 transition-colors"
+                  >
+                    <option value="">— None —</option>
+                    {adminOptions.map((a) => (
+                      <option key={a._id} value={a._id}>{a.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <FormField label="GitHub Repo Link" value={projForm.githubUrl}
+                onChange={(e) => setProjForm((f) => ({ ...f, githubUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://github.com/org/repo" />
+              <FormField label="Demo Link" value={projForm.demoUrl}
+                onChange={(e) => setProjForm((f) => ({ ...f, demoUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://app.autosa.net" />
+            </div>
+            <div className="flex gap-3 justify-end mt-6">
+              <button onClick={() => { setShowProjForm(null); setEditProj(null); }}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white/60 bg-white/5 hover:bg-white/10 transition-colors">
+                Cancel
+              </button>
+              <button onClick={() => handleSaveProj(showProjForm)} disabled={savingProj}
+                className="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white hover:bg-orange-500 disabled:opacity-50 transition-colors">
+                {savingProj ? "Saving…" : editProj ? "Save Changes" : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Sub */}
+      {confirmDeleteSub && (
+        <ConfirmModal
+          title="Delete Sub-Project"
+          message={`This will permanently delete "${confirmDeleteSub.name}" and all its nested projects. This cannot be undone.`}
+          danger
+          confirmLabel="Delete Permanently"
+          onConfirm={() => handleDeleteSub(confirmDeleteSub)}
+          onCancel={() => setConfirmDeleteSub(null)}
+        />
+      )}
+
+      {/* Confirm Delete Project */}
+      {confirmDeleteProj && (
+        <ConfirmModal
+          title="Delete Project"
+          message={`This will permanently delete "${confirmDeleteProj.name}". This cannot be undone.`}
+          danger
+          confirmLabel="Delete Permanently"
+          onConfirm={() => handleDeleteProj(confirmDeleteProj)}
+          onCancel={() => setConfirmDeleteProj(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+export default function ServicesPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-white/30 text-sm">Loading…</div>}>
+      <ServicesContent />
+    </Suspense>
+  );
+}
