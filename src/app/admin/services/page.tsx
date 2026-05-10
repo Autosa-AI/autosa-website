@@ -7,7 +7,7 @@ import FormField from "@/components/admin/FormField";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Plus, Trash2, Edit2, ChevronDown, ChevronRight,
-  GitBranch, Globe, User, FolderGit2, Zap, Layers,
+  GitBranch, Globe, User, FolderGit2, Zap, Layers, Server, Code2,
 } from "lucide-react";
 
 type ServiceSlug = "nova" | "solvo" | "yard";
@@ -26,7 +26,9 @@ interface SubProject {
   responsibleAdminId?: string;
   responsibleAdminName?: string;
   githubUrl?: string;
-  demoUrl?: string;
+  backendGithubUrl?: string;
+  uiUrl?: string;
+  backendServerUrl?: string;
   createdAt: string;
 }
 
@@ -39,7 +41,9 @@ interface Project {
   responsibleAdminId?: string;
   responsibleAdminName?: string;
   githubUrl?: string;
-  demoUrl?: string;
+  backendGithubUrl?: string;
+  uiUrl?: string;
+  backendServerUrl?: string;
   createdAt: string;
 }
 
@@ -67,7 +71,7 @@ const SERVICE_META: Record<ServiceSlug, { label: string; desc: string; color: st
   },
 };
 
-const EMPTY_FORM = { name: "", description: "", responsibleAdminId: "", githubUrl: "", demoUrl: "" };
+const EMPTY_FORM = { name: "", description: "", responsibleAdminId: "", githubUrl: "", backendGithubUrl: "", uiUrl: "", backendServerUrl: "" };
 
 function ServicesContent() {
   const { fetchWithAuth, admin } = useAdmin();
@@ -340,17 +344,29 @@ function ServicesContent() {
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     {sub.githubUrl && (
                       <a href={sub.githubUrl} target="_blank" rel="noopener noreferrer"
-                        className="p-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/5 transition-all" title="GitHub">
+                        className="p-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/5 transition-all" title="Frontend Repo">
                         <GitBranch size={14} />
                       </a>
                     )}
-                    {sub.demoUrl && (
-                      <a href={sub.demoUrl} target="_blank" rel="noopener noreferrer"
-                        className="p-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/5 transition-all" title="Demo">
+                    {sub.backendGithubUrl && (
+                      <a href={sub.backendGithubUrl} target="_blank" rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/5 transition-all" title="Backend Repo">
+                        <Code2 size={14} />
+                      </a>
+                    )}
+                    {sub.uiUrl && (
+                      <a href={sub.uiUrl} target="_blank" rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/5 transition-all" title="UI">
                         <Globe size={14} />
                       </a>
                     )}
-                    <button onClick={() => { setEditSub(sub); setSubForm({ name: sub.name, description: sub.description, responsibleAdminId: sub.responsibleAdminId ?? "", githubUrl: sub.githubUrl ?? "", demoUrl: sub.demoUrl ?? "" }); setSubErrors({}); setShowSubForm(true); }}
+                    {sub.backendServerUrl && (
+                      <a href={sub.backendServerUrl} target="_blank" rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/5 transition-all" title="Backend Server">
+                        <Server size={14} />
+                      </a>
+                    )}
+                    <button onClick={() => { setEditSub(sub); setSubForm({ name: sub.name, description: sub.description, responsibleAdminId: sub.responsibleAdminId ?? "", githubUrl: sub.githubUrl ?? "", backendGithubUrl: sub.backendGithubUrl ?? "", uiUrl: sub.uiUrl ?? "", backendServerUrl: sub.backendServerUrl ?? "" }); setSubErrors({}); setShowSubForm(true); }}
                       className="p-1.5 rounded-lg text-white/25 hover:text-white hover:bg-white/5 transition-all">
                       <Edit2 size={14} />
                     </button>
@@ -402,19 +418,31 @@ function ServicesContent() {
                                   {proj.githubUrl && (
                                     <a href={proj.githubUrl} target="_blank" rel="noopener noreferrer"
                                       className="flex items-center gap-1 text-white/30 hover:text-white/60 text-xs transition-colors">
-                                      <GitBranch size={11} /> GitHub
+                                      <GitBranch size={11} /> Frontend
                                     </a>
                                   )}
-                                  {proj.demoUrl && (
-                                    <a href={proj.demoUrl} target="_blank" rel="noopener noreferrer"
+                                  {proj.backendGithubUrl && (
+                                    <a href={proj.backendGithubUrl} target="_blank" rel="noopener noreferrer"
                                       className="flex items-center gap-1 text-white/30 hover:text-white/60 text-xs transition-colors">
-                                      <Globe size={11} /> Demo
+                                      <Code2 size={11} /> Backend
+                                    </a>
+                                  )}
+                                  {proj.uiUrl && (
+                                    <a href={proj.uiUrl} target="_blank" rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-white/30 hover:text-white/60 text-xs transition-colors">
+                                      <Globe size={11} /> UI
+                                    </a>
+                                  )}
+                                  {proj.backendServerUrl && (
+                                    <a href={proj.backendServerUrl} target="_blank" rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-white/30 hover:text-white/60 text-xs transition-colors">
+                                      <Server size={11} /> Server
                                     </a>
                                   )}
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 flex-shrink-0">
-                                <button onClick={() => { setEditProj(proj); setProjForm({ name: proj.name, description: proj.description, responsibleAdminId: proj.responsibleAdminId ?? "", githubUrl: proj.githubUrl ?? "", demoUrl: proj.demoUrl ?? "" }); setProjErrors({}); setShowProjForm(sub._id); }}
+                                <button onClick={() => { setEditProj(proj); setProjForm({ name: proj.name, description: proj.description, responsibleAdminId: proj.responsibleAdminId ?? "", githubUrl: proj.githubUrl ?? "", backendGithubUrl: proj.backendGithubUrl ?? "", uiUrl: proj.uiUrl ?? "", backendServerUrl: proj.backendServerUrl ?? "" }); setProjErrors({}); setShowProjForm(sub._id); }}
                                   className="p-1 rounded-lg text-white/20 hover:text-white hover:bg-white/5 transition-all">
                                   <Edit2 size={12} />
                                 </button>
@@ -466,12 +494,18 @@ function ServicesContent() {
                   </select>
                 </div>
               )}
-              <FormField label="GitHub URL" value={subForm.githubUrl}
+              <FormField label="Frontend Repo Link" value={subForm.githubUrl}
                 onChange={(e) => setSubForm((f) => ({ ...f, githubUrl: (e.target as HTMLInputElement).value }))}
-                placeholder="https://github.com/org/repo" />
-              <FormField label="Demo URL" value={subForm.demoUrl}
-                onChange={(e) => setSubForm((f) => ({ ...f, demoUrl: (e.target as HTMLInputElement).value }))}
-                placeholder="https://demo.autosa.net" />
+                placeholder="https://github.com/org/frontend-repo" />
+              <FormField label="Backend Repo Link" value={subForm.backendGithubUrl}
+                onChange={(e) => setSubForm((f) => ({ ...f, backendGithubUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://github.com/org/backend-repo" />
+              <FormField label="UI Link" value={subForm.uiUrl}
+                onChange={(e) => setSubForm((f) => ({ ...f, uiUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://app.autosa.net" />
+              <FormField label="Backend Server Link" value={subForm.backendServerUrl}
+                onChange={(e) => setSubForm((f) => ({ ...f, backendServerUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://api.autosa.net" />
             </div>
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => { setShowSubForm(false); setEditSub(null); }}
@@ -517,12 +551,18 @@ function ServicesContent() {
                   </select>
                 </div>
               )}
-              <FormField label="GitHub Repo Link" value={projForm.githubUrl}
+              <FormField label="Frontend Repo Link" value={projForm.githubUrl}
                 onChange={(e) => setProjForm((f) => ({ ...f, githubUrl: (e.target as HTMLInputElement).value }))}
-                placeholder="https://github.com/org/repo" />
-              <FormField label="Demo Link" value={projForm.demoUrl}
-                onChange={(e) => setProjForm((f) => ({ ...f, demoUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://github.com/org/frontend-repo" />
+              <FormField label="Backend Repo Link" value={projForm.backendGithubUrl}
+                onChange={(e) => setProjForm((f) => ({ ...f, backendGithubUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://github.com/org/backend-repo" />
+              <FormField label="UI Link" value={projForm.uiUrl}
+                onChange={(e) => setProjForm((f) => ({ ...f, uiUrl: (e.target as HTMLInputElement).value }))}
                 placeholder="https://app.autosa.net" />
+              <FormField label="Backend Server Link" value={projForm.backendServerUrl}
+                onChange={(e) => setProjForm((f) => ({ ...f, backendServerUrl: (e.target as HTMLInputElement).value }))}
+                placeholder="https://api.autosa.net" />
             </div>
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => { setShowProjForm(null); setEditProj(null); }}

@@ -38,13 +38,15 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ success: false, error: "Invalid body" }, { status: 400 });
 
-    const { service, name, description, responsibleAdminId, githubUrl, demoUrl } = body as {
+    const { service, name, description, responsibleAdminId, githubUrl, backendGithubUrl, uiUrl, backendServerUrl } = body as {
       service?: string;
       name?: string;
       description?: string;
       responsibleAdminId?: string;
       githubUrl?: string;
-      demoUrl?: string;
+      backendGithubUrl?: string;
+      uiUrl?: string;
+      backendServerUrl?: string;
     };
 
     if (!service || !VALID_SERVICES.includes(service as ServiceSlug)) {
@@ -69,7 +71,9 @@ export async function POST(req: NextRequest) {
       responsibleAdminId: responsibleAdminId && ObjectId.isValid(responsibleAdminId) ? new ObjectId(responsibleAdminId) : undefined,
       responsibleAdminName,
       githubUrl: githubUrl?.trim() || undefined,
-      demoUrl: demoUrl?.trim() || undefined,
+      backendGithubUrl: backendGithubUrl?.trim() || undefined,
+      uiUrl: uiUrl?.trim() || undefined,
+      backendServerUrl: backendServerUrl?.trim() || undefined,
       createdBy: new ObjectId(payload.sub),
       createdAt: now,
       updatedAt: now,

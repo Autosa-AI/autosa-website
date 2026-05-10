@@ -27,7 +27,9 @@ export async function PATCH(
     if (typeof body.name === "string" && body.name.trim()) $set.name = body.name.trim();
     if (typeof body.description === "string" && body.description.trim()) $set.description = body.description.trim();
     if (typeof body.githubUrl === "string") $set.githubUrl = body.githubUrl.trim() || undefined;
-    if (typeof body.demoUrl === "string") $set.demoUrl = body.demoUrl.trim() || undefined;
+    if (typeof body.backendGithubUrl === "string") $set.backendGithubUrl = body.backendGithubUrl.trim() || undefined;
+    if (typeof body.uiUrl === "string") $set.uiUrl = body.uiUrl.trim() || undefined;
+    if (typeof body.backendServerUrl === "string") $set.backendServerUrl = body.backendServerUrl.trim() || undefined;
 
     if (body.responsibleAdminId && ObjectId.isValid(body.responsibleAdminId)) {
       const admin = await db.collection("admins").findOne({ _id: new ObjectId(body.responsibleAdminId) }, { projection: { name: 1 } });

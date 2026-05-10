@@ -25,7 +25,9 @@ export interface SubProject {
   responsibleAdminId?: ObjectId;
   responsibleAdminName?: string;
   githubUrl?: string;
-  demoUrl?: string;
+  backendGithubUrl?: string;
+  uiUrl?: string;
+  backendServerUrl?: string;
   createdBy: ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -40,7 +42,9 @@ export interface Project {
   responsibleAdminId?: ObjectId;
   responsibleAdminName?: string;
   githubUrl?: string;
-  demoUrl?: string;
+  backendGithubUrl?: string;
+  uiUrl?: string;
+  backendServerUrl?: string;
   createdBy: ObjectId;
   createdAt: Date;
   updatedAt: Date;
