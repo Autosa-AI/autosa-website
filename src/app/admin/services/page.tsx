@@ -51,16 +51,16 @@ const SERVICE_META: Record<ServiceSlug, { label: string; desc: string; color: st
   nova: {
     label: "Nova",
     desc: "Next-generation AI-powered solutions",
-    color: "bg-orange-500/15 text-orange-300 border-orange-500/25",
-    accent: "text-orange-400",
-    glow: "shadow-orange-500/10",
+    color: "bg-[#c8905a]/12 text-[#d4a070] border-[#c8905a]/22",
+    accent: "text-[#c8905a]",
+    glow: "shadow-[#c8905a]/10",
   },
   solvo: {
     label: "Solvo",
     desc: "Intelligent problem-solving platform",
-    color: "bg-orange-500/10 text-orange-200 border-orange-500/20",
-    accent: "text-orange-300",
-    glow: "shadow-orange-500/5",
+    color: "bg-[#c8905a]/8 text-[#c8a070] border-[#c8905a]/15",
+    accent: "text-[#c8a070]",
+    glow: "shadow-[#c8905a]/5",
   },
   yard: {
     label: "Yard",
@@ -264,7 +264,7 @@ function ServicesContent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-white text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Layers size={22} className="text-orange-400" /> Services
+            <Layers size={22} className="text-[#c8905a]" /> Services
           </h1>
           <p className="text-white/40 text-sm mt-1">Manage sub-projects and nested projects</p>
         </div>
@@ -292,7 +292,7 @@ function ServicesContent() {
         <p className={`text-sm ${meta.accent}`}>{meta.desc}</p>
         <button
           onClick={() => { setSubForm(EMPTY_FORM); setSubErrors({}); setEditSub(null); setShowSubForm(true); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 text-white text-sm font-semibold hover:bg-orange-500 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#c8905a] text-white text-sm font-semibold hover:bg-[#b87d4a] transition-colors"
         >
           <Plus size={15} /> Add Sub-Project
         </button>
@@ -309,7 +309,7 @@ function ServicesContent() {
           <p className="text-white/30 text-sm">No sub-projects yet for {activeService}.</p>
           <button
             onClick={() => { setSubForm(EMPTY_FORM); setSubErrors({}); setEditSub(null); setShowSubForm(true); }}
-            className="mt-4 text-orange-400 text-sm hover:text-orange-300 transition-colors"
+            className="mt-4 text-[#c8905a] text-sm hover:text-[#d4a070] transition-colors"
           >
             + Create one
           </button>
@@ -384,7 +384,7 @@ function ServicesContent() {
                       <p className="text-white/30 text-xs font-medium uppercase tracking-wider">Projects</p>
                       <button
                         onClick={() => { setProjForm(EMPTY_FORM); setProjErrors({}); setEditProj(null); setShowProjForm(sub._id); }}
-                        className="flex items-center gap-1.5 text-xs text-orange-400 hover:text-orange-300 transition-colors"
+                        className="flex items-center gap-1.5 text-xs text-[#c8905a] hover:text-[#d4a070] transition-colors"
                       >
                         <Plus size={12} /> Add Project
                       </button>
@@ -485,7 +485,7 @@ function ServicesContent() {
                   <select
                     value={subForm.responsibleAdminId}
                     onChange={(e) => setSubForm((f) => ({ ...f, responsibleAdminId: e.target.value }))}
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-orange-500/60 transition-colors"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#c8905a]/50 transition-colors"
                   >
                     <option value="">— None —</option>
                     {adminOptions.map((a) => (
@@ -513,7 +513,7 @@ function ServicesContent() {
                 Cancel
               </button>
               <button onClick={handleSaveSub} disabled={savingSub}
-                className="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white hover:bg-orange-500 disabled:opacity-50 transition-colors">
+                className="px-4 py-2 rounded-xl text-sm font-semibold bg-[#c8905a] text-white hover:bg-[#b87d4a] disabled:opacity-50 transition-colors">
                 {savingSub ? "Saving…" : editSub ? "Save Changes" : "Create"}
               </button>
             </div>
@@ -542,7 +542,7 @@ function ServicesContent() {
                   <select
                     value={projForm.responsibleAdminId}
                     onChange={(e) => setProjForm((f) => ({ ...f, responsibleAdminId: e.target.value }))}
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-orange-500/60 transition-colors"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#c8905a]/50 transition-colors"
                   >
                     <option value="">— None —</option>
                     {adminOptions.map((a) => (
@@ -570,7 +570,7 @@ function ServicesContent() {
                 Cancel
               </button>
               <button onClick={() => handleSaveProj(showProjForm)} disabled={savingProj}
-                className="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white hover:bg-orange-500 disabled:opacity-50 transition-colors">
+                className="px-4 py-2 rounded-xl text-sm font-semibold bg-[#c8905a] text-white hover:bg-[#b87d4a] disabled:opacity-50 transition-colors">
                 {savingProj ? "Saving…" : editProj ? "Save Changes" : "Create"}
               </button>
             </div>

@@ -171,7 +171,7 @@ export default function AdminsPage() {
         </div>
         <button
           onClick={() => { setCreateForm(EMPTY_CREATE); setCreateErrors({}); setShowCreate(true); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 text-white text-sm font-semibold hover:bg-orange-500 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#c8905a] text-white text-sm font-semibold hover:bg-[#b87d4a] transition-colors"
         >
           <Plus size={16} /> Add Admin
         </button>
@@ -199,18 +199,18 @@ export default function AdminsPage() {
                 const isSelf = a._id === currentAdmin?._id;
                 const isOtherOwner = a.role === "owner" && !isSelf;
                 return (
-                  <tr key={a._id} className={`transition-colors ${isSelf ? "bg-orange-500/[0.03]" : "hover:bg-white/[0.015]"}`}>
+                  <tr key={a._id} className={`transition-colors ${isSelf ? "bg-[#c8905a]/[0.04]" : "hover:bg-white/[0.015]"}`}>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <span className="text-white text-sm font-medium">{a.name}</span>
-                        {isSelf && <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 font-bold">you</span>}
+                        {isSelf && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#c8905a]/15 text-[#c8905a] font-bold">you</span>}
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-white/50 text-sm">{a.email}</td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${
                         a.role === "owner"
-                          ? "bg-orange-500/15 text-orange-300 border-orange-500/30"
+                          ? "bg-[#c8905a]/12 text-[#d4a070] border-[#c8905a]/25"
                           : "bg-white/5 text-white/40 border-white/10"
                       }`}>
                         {a.role === "owner" && <Crown size={10} />} {a.role}
@@ -280,7 +280,7 @@ export default function AdminsPage() {
             </div>
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-white/60 bg-white/5 hover:bg-white/10 transition-colors">Cancel</button>
-              <button onClick={handleCreate} disabled={creating} className="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white hover:bg-orange-500 disabled:opacity-50 transition-colors">
+              <button onClick={handleCreate} disabled={creating} className="px-4 py-2 rounded-xl text-sm font-semibold bg-[#c8905a] text-white hover:bg-[#b87d4a] disabled:opacity-50 transition-colors">
                 {creating ? "Creating…" : "Create"}
               </button>
             </div>
@@ -313,7 +313,7 @@ export default function AdminsPage() {
             </div>
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => setEditTarget(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-white/60 bg-white/5 hover:bg-white/10 transition-colors">Cancel</button>
-              <button onClick={handleEdit} disabled={saving} className="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white hover:bg-orange-500 disabled:opacity-50 transition-colors">
+              <button onClick={handleEdit} disabled={saving} className="px-4 py-2 rounded-xl text-sm font-semibold bg-[#c8905a] text-white hover:bg-[#b87d4a] disabled:opacity-50 transition-colors">
                 {saving ? "Saving…" : "Save Changes"}
               </button>
             </div>

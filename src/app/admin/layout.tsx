@@ -31,8 +31,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           <Menu size={20} />
         </button>
         <div className="flex flex-col">
-          <p className="text-white font-black text-sm tracking-[0.1em] uppercase leading-none">AUTOSA</p>
-          <p className="text-[#F97316] text-[8px] font-bold tracking-[0.25em] uppercase mt-0.5">Admin Panel</p>
+          <p className="autosa-wordmark text-white text-sm leading-none" style={{ letterSpacing: "0.12em" }}>AUTOSA</p>
+          <p className="text-[8px] font-bold tracking-[0.22em] uppercase mt-0.5" style={{ color: "#c8905a" }}>Admin Panel</p>
         </div>
       </header>
 

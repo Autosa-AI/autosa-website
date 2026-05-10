@@ -35,7 +35,7 @@ export default function ConfirmModal({ title, message, onConfirm, onCancel, dang
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
               danger
                 ? "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
-                : "bg-orange-500 text-white hover:bg-orange-600"
+                : "bg-[#c8905a] text-white hover:bg-[#b87d4a]"
             }`}
           >
             {confirmLabel ?? (danger ? "Delete" : "Confirm")}

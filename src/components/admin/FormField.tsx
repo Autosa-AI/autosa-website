@@ -18,14 +18,14 @@ export default function FormField(props: Props) {
   const baseClass = `w-full bg-white/[0.04] border rounded-xl px-3 py-2.5 text-white placeholder:text-white/25 text-sm focus:outline-none transition-colors ${
     error
       ? "border-red-500/50 focus:border-red-500/70"
-      : "border-white/10 focus:border-orange-500/60"
+      : "border-white/10 focus:border-[#c8905a]/50"
   }`;
 
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-white/60 text-xs font-medium">
         {label}
-        {required && <span className="text-orange-400 ml-1">*</span>}
+        {required && <span className="text-[#c8905a] ml-1">*</span>}
       </label>
       {textarea ? (
         <textarea

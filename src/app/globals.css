@@ -77,6 +77,11 @@ h1, h2, h3, h4, h5 {
   50% { box-shadow: 0 10px 36px rgba(200, 149, 90, 0.38); }
 }
 
+@keyframes logoGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
 .animate-spin-slow { animation: spin-slow 60s linear infinite; }
 .animate-float-up { animation: float-up 6s ease-in-out infinite; }
 .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
