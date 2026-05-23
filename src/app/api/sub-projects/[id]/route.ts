@@ -3,7 +3,9 @@ import { getAdminFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
 import { logAction } from "@/lib/auditLog";
 import { ObjectId } from "mongodb";
-import type { SubProject } from "@/lib/models";
+import type { SubProject, ErpProvider } from "@/lib/models";
+
+const VALID_ERP_PROVIDERS: ErpProvider[] = ["odoo", "sap", "oracle", "microsoft-dynamics", "salesforce", "netsuite", "infor", "epicor", "other"];
 
 export async function PATCH(
   req: NextRequest,
@@ -30,6 +32,9 @@ export async function PATCH(
     if (typeof body.backendGithubUrl === "string") $set.backendGithubUrl = body.backendGithubUrl.trim() || undefined;
     if (typeof body.uiUrl === "string") $set.uiUrl = body.uiUrl.trim() || undefined;
     if (typeof body.backendServerUrl === "string") $set.backendServerUrl = body.backendServerUrl.trim() || undefined;
+    if (Array.isArray(body.erpProviders)) {
+      $set.erpProviders = (body.erpProviders as string[]).filter((p) => VALID_ERP_PROVIDERS.includes(p as ErpProvider)) as ErpProvider[];
+    }
 
     if (body.responsibleAdminId && ObjectId.isValid(body.responsibleAdminId)) {
       const admin = await db.collection("admins").findOne({ _id: new ObjectId(body.responsibleAdminId) }, { projection: { name: 1 } });

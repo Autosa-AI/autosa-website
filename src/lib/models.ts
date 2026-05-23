@@ -17,9 +17,21 @@ export type AdminWithoutPassword = Omit<Admin, "passwordHash">;
 
 export type ServiceSlug = "nova" | "solvo" | "yard";
 
+export type ErpProvider =
+  | "odoo"
+  | "sap"
+  | "oracle"
+  | "microsoft-dynamics"
+  | "salesforce"
+  | "netsuite"
+  | "infor"
+  | "epicor"
+  | "other";
+
 export interface SubProject {
   _id: ObjectId;
   service: ServiceSlug;
+  erpProviders?: ErpProvider[];
   name: string;
   description: string;
   responsibleAdminId?: ObjectId;

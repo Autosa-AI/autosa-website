@@ -12,6 +12,20 @@ import {
 
 type ServiceSlug = "nova" | "solvo" | "yard";
 
+type ErpProvider = "odoo" | "sap" | "oracle" | "microsoft-dynamics" | "salesforce" | "netsuite" | "infor" | "epicor" | "other";
+
+const ERP_PROVIDERS: { value: ErpProvider; label: string }[] = [
+  { value: "odoo", label: "Odoo" },
+  { value: "sap", label: "SAP" },
+  { value: "oracle", label: "Oracle" },
+  { value: "microsoft-dynamics", label: "Microsoft Dynamics" },
+  { value: "salesforce", label: "Salesforce" },
+  { value: "netsuite", label: "NetSuite" },
+  { value: "infor", label: "Infor" },
+  { value: "epicor", label: "Epicor" },
+  { value: "other", label: "Other" },
+];
+
 interface AdminOption {
   _id: string;
   name: string;
@@ -21,6 +35,7 @@ interface AdminOption {
 interface SubProject {
   _id: string;
   service: ServiceSlug;
+  erpProviders?: ErpProvider[];
   name: string;
   description: string;
   responsibleAdminId?: string;
@@ -71,7 +86,7 @@ const SERVICE_META: Record<ServiceSlug, { label: string; desc: string; color: st
   },
 };
 
-const EMPTY_FORM = { name: "", description: "", responsibleAdminId: "", githubUrl: "", backendGithubUrl: "", uiUrl: "", backendServerUrl: "" };
+const EMPTY_FORM = { name: "", description: "", erpProviders: [] as ErpProvider[], responsibleAdminId: "", githubUrl: "", backendGithubUrl: "", uiUrl: "", backendServerUrl: "" };
 
 function ServicesContent() {
   const { fetchWithAuth, admin } = useAdmin();
@@ -86,6 +101,7 @@ function ServicesContent() {
   const [expandedSubs, setExpandedSubs] = useState<Set<string>>(new Set());
   const [adminOptions, setAdminOptions] = useState<AdminOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erpFilter, setErpFilter] = useState<ErpProvider | "all">("all");
 
   // Sub-project form
   const [showSubForm, setShowSubForm] = useState(false);
@@ -144,6 +160,7 @@ function ServicesContent() {
 
   function switchService(svc: ServiceSlug) {
     setActiveService(svc);
+    setErpFilter("all");
     router.replace(`/admin/services?service=${svc}`, { scroll: false });
   }
 
@@ -165,6 +182,7 @@ function ServicesContent() {
     const e: Partial<typeof EMPTY_FORM> = {};
     if (!subForm.name.trim()) e.name = "Required";
     if (!subForm.description.trim()) e.description = "Required";
+    if (activeService === "solvo" && subForm.erpProviders.length === 0) (e as Record<string, unknown>).erpProviders = "Required";
     setSubErrors(e);
     return !Object.keys(e).length;
   }
@@ -257,6 +275,9 @@ function ServicesContent() {
   }
 
   const meta = SERVICE_META[activeService];
+  const visibleSubProjects = activeService === "solvo" && erpFilter !== "all"
+    ? subProjects.filter((s) => s.erpProviders?.includes(erpFilter as ErpProvider))
+    : subProjects;
 
   return (
     <div className="px-4 py-6 sm:p-8 max-w-5xl">
@@ -287,6 +308,27 @@ function ServicesContent() {
         ))}
       </div>
 
+      {/* ERP Provider Filter (Solvo only) */}
+      {activeService === "solvo" && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            onClick={() => setErpFilter("all")}
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${erpFilter === "all" ? "bg-[#c8905a]/20 text-[#c8a070] border border-[#c8905a]/30" : "text-white/40 hover:text-white/70 border border-transparent"}`}
+          >
+            All
+          </button>
+          {ERP_PROVIDERS.map((p) => (
+            <button
+              key={p.value}
+              onClick={() => setErpFilter(p.value)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${erpFilter === p.value ? "bg-[#c8905a]/20 text-[#c8a070] border border-[#c8905a]/30" : "text-white/40 hover:text-white/70 border border-transparent"}`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Service description + Add button */}
       <div className="flex items-center justify-between mb-5">
         <p className={`text-sm ${meta.accent}`}>{meta.desc}</p>
@@ -303,20 +345,24 @@ function ServicesContent() {
         <div className="space-y-3">
           {[1, 2].map((i) => <div key={i} className="h-20 rounded-2xl bg-white/[0.03] border border-white/[0.06] animate-pulse" />)}
         </div>
-      ) : subProjects.length === 0 ? (
+      ) : visibleSubProjects.length === 0 ? (
         <div className="text-center py-16 rounded-2xl border border-dashed border-white/[0.08]">
           <FolderGit2 size={40} className="text-white/10 mx-auto mb-3" />
-          <p className="text-white/30 text-sm">No sub-projects yet for {activeService}.</p>
-          <button
-            onClick={() => { setSubForm(EMPTY_FORM); setSubErrors({}); setEditSub(null); setShowSubForm(true); }}
-            className="mt-4 text-[#c8905a] text-sm hover:text-[#d4a070] transition-colors"
-          >
-            + Create one
-          </button>
+          <p className="text-white/30 text-sm">
+            {erpFilter !== "all" ? `No sub-projects for ${ERP_PROVIDERS.find((p) => p.value === erpFilter)?.label ?? erpFilter}.` : `No sub-projects yet for ${activeService}.`}
+          </p>
+          {erpFilter === "all" && (
+            <button
+              onClick={() => { setSubForm(EMPTY_FORM); setSubErrors({}); setEditSub(null); setShowSubForm(true); }}
+              className="mt-4 text-[#c8905a] text-sm hover:text-[#d4a070] transition-colors"
+            >
+              + Create one
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
-          {subProjects.map((sub) => {
+          {visibleSubProjects.map((sub) => {
             const isExpanded = expandedSubs.has(sub._id);
             const subProjects_ = projects[sub._id];
 
@@ -333,6 +379,11 @@ function ServicesContent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-white font-semibold text-sm">{sub.name}</p>
+                      {sub.erpProviders?.map((ep) => (
+                        <span key={ep} className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#c8905a]/10 text-[#c8a070] border border-[#c8905a]/20">
+                          {ERP_PROVIDERS.find((p) => p.value === ep)?.label ?? ep}
+                        </span>
+                      ))}
                       {sub.responsibleAdminName && (
                         <span className="flex items-center gap-1 text-white/30 text-xs">
                           <User size={10} /> {sub.responsibleAdminName}
@@ -366,7 +417,7 @@ function ServicesContent() {
                         <Server size={14} />
                       </a>
                     )}
-                    <button onClick={() => { setEditSub(sub); setSubForm({ name: sub.name, description: sub.description, responsibleAdminId: sub.responsibleAdminId ?? "", githubUrl: sub.githubUrl ?? "", backendGithubUrl: sub.backendGithubUrl ?? "", uiUrl: sub.uiUrl ?? "", backendServerUrl: sub.backendServerUrl ?? "" }); setSubErrors({}); setShowSubForm(true); }}
+                    <button onClick={() => { setEditSub(sub); setSubForm({ name: sub.name, description: sub.description, erpProviders: sub.erpProviders ?? [], responsibleAdminId: sub.responsibleAdminId ?? "", githubUrl: sub.githubUrl ?? "", backendGithubUrl: sub.backendGithubUrl ?? "", uiUrl: sub.uiUrl ?? "", backendServerUrl: sub.backendServerUrl ?? "" }); setSubErrors({}); setShowSubForm(true); }}
                       className="p-1.5 rounded-lg text-white/25 hover:text-white hover:bg-white/5 transition-all">
                       <Edit2 size={14} />
                     </button>
@@ -442,7 +493,7 @@ function ServicesContent() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 flex-shrink-0">
-                                <button onClick={() => { setEditProj(proj); setProjForm({ name: proj.name, description: proj.description, responsibleAdminId: proj.responsibleAdminId ?? "", githubUrl: proj.githubUrl ?? "", backendGithubUrl: proj.backendGithubUrl ?? "", uiUrl: proj.uiUrl ?? "", backendServerUrl: proj.backendServerUrl ?? "" }); setProjErrors({}); setShowProjForm(sub._id); }}
+                                <button onClick={() => { setEditProj(proj); setProjForm({ name: proj.name, description: proj.description, erpProviders: [], responsibleAdminId: proj.responsibleAdminId ?? "", githubUrl: proj.githubUrl ?? "", backendGithubUrl: proj.backendGithubUrl ?? "", uiUrl: proj.uiUrl ?? "", backendServerUrl: proj.backendServerUrl ?? "" }); setProjErrors({}); setShowProjForm(sub._id); }}
                                   className="p-1 rounded-lg text-white/20 hover:text-white hover:bg-white/5 transition-all">
                                   <Edit2 size={12} />
                                 </button>
@@ -479,6 +530,34 @@ function ServicesContent() {
               <FormField label="Description" required textarea rows={3} value={subForm.description}
                 onChange={(e) => setSubForm((f) => ({ ...f, description: (e.target as HTMLTextAreaElement).value }))}
                 placeholder="What does this sub-project do?" error={subErrors.description} />
+              {activeService === "solvo" && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-white/60 text-xs font-medium">ERP Providers <span className="text-red-400">*</span></label>
+                  <div className="flex flex-wrap gap-2">
+                    {ERP_PROVIDERS.map((p) => {
+                      const selected = subForm.erpProviders.includes(p.value);
+                      return (
+                        <button
+                          key={p.value}
+                          type="button"
+                          onClick={() => setSubForm((f) => ({
+                            ...f,
+                            erpProviders: selected
+                              ? f.erpProviders.filter((v) => v !== p.value)
+                              : [...f.erpProviders, p.value],
+                          }))}
+                          className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all ${selected ? "bg-[#c8905a]/20 text-[#c8a070] border-[#c8905a]/40" : "text-white/40 border-white/10 hover:text-white/70 hover:border-white/20"}`}
+                        >
+                          {p.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!!(subErrors as Record<string, unknown>).erpProviders && (
+                    <p className="text-red-400 text-xs">Select at least one ERP provider</p>
+                  )}
+                </div>
+              )}
               {admin?.role === "owner" && adminOptions.length > 0 && (
                 <div className="flex flex-col gap-1.5">
                   <label className="text-white/60 text-xs font-medium">Responsible Admin</label>
