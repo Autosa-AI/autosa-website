@@ -8,6 +8,17 @@ export const metadata: Metadata = {
     icon: "/logo.png",
     apple: "/logo.png",
   },
+  openGraph: {
+    title: "Autosa | AI-Powered Solutions",
+    description: "Autosa delivers next-generation AI solutions through Nova, Solvo, and Yard.",
+    siteName: "Autosa",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Autosa | AI-Powered Solutions",
+    description: "Autosa delivers next-generation AI solutions through Nova, Solvo, and Yard.",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
